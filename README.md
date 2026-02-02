@@ -74,16 +74,16 @@ app/
 
 ### Prerequisites
 - Node.js 18+
-- npm or yarn package manager
+- Bun package manager
 
 ### Installation
 
 ```bash
 # Install dependencies
-npm install
+bun install
 
 # Run development server
-npm run dev
+bun run dev
 
 # Open browser to http://localhost:3000
 ```
@@ -91,8 +91,8 @@ npm run dev
 ### Build for Production
 
 ```bash
-npm run build
-npm start
+bun run build
+bun start
 ```
 
 ## Color Palette
