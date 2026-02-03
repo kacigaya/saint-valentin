@@ -139,7 +139,6 @@ export default function ValentinePage() {
   const [accepted, setAccepted] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const noButtonRef = useRef<HTMLButtonElement>(null);
 
   // Playful messages based on escape count
   const getEscapeMessage = () => {
@@ -160,33 +159,27 @@ export default function ValentinePage() {
 
   // Move No button to random position
   const moveNoButton = useCallback(() => {
-    if (!containerRef.current || !noButtonRef.current) return;
+    // Use window dimensions for fixed positioning
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
 
-    const container = containerRef.current.getBoundingClientRect();
-    const button = noButtonRef.current.getBoundingClientRect();
+    // Approximate button size
+    const buttonWidth = 160;
+    const buttonHeight = 60;
 
     // Calculate safe boundaries (keep button fully visible)
-    const padding = 20;
-    const maxX = container.width - button.width - padding * 2;
-    const maxY = container.height - button.height - padding * 2;
+    const padding = 30;
+    const maxX = windowWidth - buttonWidth - padding;
+    const maxY = windowHeight - buttonHeight - padding;
 
-    // Generate random position with some minimum distance from current
-    let newX, newY;
-    const minDistance = 100;
-
-    do {
-      newX = padding + Math.random() * maxX;
-      newY = padding + Math.random() * maxY;
-    } while (
-      hasMovedNo &&
-      Math.hypot(newX - noButtonPosition.x, newY - noButtonPosition.y) <
-        minDistance
-    );
+    // Generate random position
+    const newX = padding + Math.random() * (maxX - padding);
+    const newY = padding + Math.random() * (maxY - padding);
 
     setNoButtonPosition({ x: newX, y: newY });
     setHasMovedNo(true);
     setEscapeCount((prev) => prev + 1);
-  }, [hasMovedNo, noButtonPosition]);
+  }, []);
 
   // Handle Yes button click
   const handleYes = () => {
@@ -206,6 +199,7 @@ export default function ValentinePage() {
   };
 
   return (
+    <>
     <div
       ref={containerRef}
       className="grain relative min-h-screen w-full overflow-hidden"
@@ -303,14 +297,14 @@ export default function ValentinePage() {
                 <div className="absolute inset-0 rounded-full bg-white/20 opacity-0 transition-opacity group-hover:opacity-100" />
               </button>
 
-              {/* No Button - Moves on hover/touch (only in default position) */}
+              {/* No Button - Escapes when touched */}
               {!hasMovedNo && (
                 <button
-                  ref={noButtonRef}
-                  onMouseEnter={moveNoButton}
-                  onTouchStart={moveNoButton}
-                  onClick={moveNoButton}
-                  className="btn-romantic min-w-[140px] rounded-full border-2 border-rose-400/40 bg-transparent px-10 py-4 text-xl font-semibold text-rose-300 backdrop-blur-sm transition-all duration-300 hover:border-rose-400/60 hover:bg-rose-950/30 focus:outline-none focus:ring-4 focus:ring-rose-400/30 sm:min-w-[160px] sm:px-12 sm:py-5 sm:text-2xl"
+                  onMouseEnter={() => moveNoButton()}
+                  onTouchStart={(e) => { e.preventDefault(); moveNoButton(); }}
+                  onClick={() => moveNoButton()}
+                  className="btn-romantic min-w-[140px] rounded-full border-2 border-rose-400/40 bg-rose-950/90 px-10 py-4 text-xl font-semibold text-rose-300 backdrop-blur-sm transition-all duration-300 hover:border-rose-400/60 hover:bg-rose-950/30 focus:outline-none focus:ring-4 focus:ring-rose-400/30 sm:min-w-[160px] sm:px-12 sm:py-5 sm:text-2xl"
+                  style={{ touchAction: 'none' }}
                   aria-label="No button - but it will escape!"
                 >
                   No
@@ -377,24 +371,6 @@ export default function ValentinePage() {
         )}
       </main>
 
-      {/* Escaped No Button - Absolute positioned */}
-      {hasMovedNo && !accepted && (
-        <button
-          ref={noButtonRef}
-          onMouseEnter={moveNoButton}
-          onTouchStart={moveNoButton}
-          onClick={moveNoButton}
-          className="btn-romantic absolute z-20 min-w-[140px] rounded-full border-2 border-rose-400/40 bg-rose-950/80 px-10 py-4 text-xl font-semibold text-rose-300 backdrop-blur-sm transition-all duration-500 ease-out hover:border-rose-400/60 focus:outline-none focus:ring-4 focus:ring-rose-400/30 sm:min-w-[160px] sm:px-12 sm:py-5 sm:text-2xl"
-          style={{
-            left: noButtonPosition.x,
-            top: noButtonPosition.y,
-            transform: "translate(0, 0)",
-          }}
-          aria-label="No button - keeps escaping!"
-        >
-          No
-        </button>
-      )}
 
       {/* Decorative corner elements */}
       <div className="absolute top-8 left-8 opacity-20">
@@ -426,5 +402,35 @@ export default function ValentinePage() {
         </p>
       </footer>
     </div>
+
+    {/* Escaped No Button - Fixed position outside container, moves across screen */}
+    {hasMovedNo && !accepted && (
+      <button
+        onMouseEnter={() => moveNoButton()}
+        onTouchStart={(e) => { e.preventDefault(); moveNoButton(); }}
+        onClick={() => moveNoButton()}
+        style={{
+          position: 'fixed',
+          left: `${noButtonPosition.x}px`,
+          top: `${noButtonPosition.y}px`,
+          zIndex: 9999,
+          minWidth: '140px',
+          padding: '16px 40px',
+          fontSize: '20px',
+          fontWeight: 600,
+          color: '#fda4af',
+          backgroundColor: 'rgba(76, 5, 25, 0.95)',
+          border: '2px solid rgba(251, 113, 133, 0.5)',
+          borderRadius: '9999px',
+          cursor: 'pointer',
+          touchAction: 'none',
+          transition: 'left 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), top 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+          boxShadow: '0 0 30px rgba(225, 29, 72, 0.4)',
+        }}
+      >
+        No
+      </button>
+    )}
+    </>
   );
 }
